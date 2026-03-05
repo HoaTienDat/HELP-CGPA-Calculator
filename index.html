@@ -42,6 +42,56 @@ updateBrochureButtonVisibility();
     .error { color: #b00; font-size: 12px; margin-top: 6px; }
     .success { color: #085; font-size: 12px; margin-top: 6px; }
     .small { font-size: 12px; }
+  
+    /* ===== Mobile-first layout overrides (2026-03) ===== */
+    body { margin: 12px; }
+    .card { padding: 12px; border-radius: 14px; }
+    .row { grid-template-columns: 1fr; }
+    .split { flex-direction: column; align-items: stretch; }
+    .actions { gap: 8px; }
+    input, select, button { padding: 12px; border-radius: 12px; }
+    button { min-height: 44px; }
+
+    /* Table: keep fields readable on phone by allowing horizontal scroll */
+    .table-wrapper{
+      margin-top:10px;
+      max-height: 420px;
+      overflow-y: auto;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    #courseTable{
+      width: 100%;
+      min-width: 980px; /* prevents columns from collapsing on mobile */
+      border-collapse: collapse;
+    }
+
+    #courseTable th, #courseTable td { white-space: nowrap; }
+    #courseTable td:nth-child(2), #courseTable th:nth-child(2) { white-space: normal; min-width: 320px; } /* course name */
+    #courseTable td:nth-child(1), #courseTable th:nth-child(1) { min-width: 140px; } /* code */
+    #courseTable td:nth-child(5), #courseTable th:nth-child(5) { min-width: 150px; } /* grade */
+    #courseTable input, #courseTable select{
+      min-width: 140px;
+      height: 44px;           /* better touch target */
+      font-size: 16px;        /* prevents iOS zoom on focus */
+    }
+
+    /* Make long buttons not cramped on phone */
+    .actions > button { flex: 1 1 180px; }
+
+    /* Desktop enhancements */
+    @media (min-width: 900px){
+      body { margin: 18px; }
+      .row { grid-template-columns: 1fr 1fr; }
+      .split { flex-direction: row; align-items: center; }
+      #courseTable{ min-width: 900px; }
+      #courseTable input, #courseTable select{ font-size: 14px; }
+    }
+    
   </style>
 </head>
 
@@ -85,7 +135,7 @@ updateBrochureButtonVisibility();
       </div>
     </div>
 
-    <div style="margin-top:10px; overflow:auto; max-height: 420px;">
+    <div class="table-wrapper">
       <table id="courseTable">
         <thead>
           <tr>
