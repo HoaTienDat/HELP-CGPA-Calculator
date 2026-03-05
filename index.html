@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HELP Classification CGPA Calculator (by HOA TIẾN ĐẠT)</title>
+
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+
+// initial state
+updateBrochureButtonVisibility();
+</script>
+
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 18px; background: #fafafa; color: #111; }
+    h1 { margin: 0 0 8px; font-size: 20px; }
+    .card { background: #fff; border: 1px solid #e6e6e6; border-radius: 12px; padding: 14px; margin: 12px 0; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { font-size: 12px; color: #444; display: block; margin-bottom: 6px; }
+    input, select, button {
+      width: 100%; padding: 10px; border: 1px solid #dcdcdc; border-radius: 10px; background: #fff;
+      font-size: 14px; box-sizing: border-box;
+    }
+    button { cursor: pointer; font-weight: 600; }
+    button.primary { border-color: #0b5; background: #0b5; color: #fff; }
+    button.secondary { border-color: #bbb; background: #f5f5f5; }
+    button.danger { border-color: #c33; background: #c33; color: #fff; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .hint { font-size: 12px; color: #666; margin-top: 6px; }
+    .muted { color: #777; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #eee; text-align: left; padding: 8px; font-size: 13px; vertical-align: top; }
+    th { font-size: 12px; color: #444; background: #fcfcfc; position: sticky; top: 0; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    .ok { background: #e6fff0; color: #084; border: 1px solid #bdf0cf; }
+    .warn { background: #fff8e6; color: #8a5a00; border: 1px solid #f1ddaa; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .split { display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
+    .split > * { flex: 1 1 240px; }
+    .error { color: #b00; font-size: 12px; margin-top: 6px; }
+    .success { color: #085; font-size: 12px; margin-top: 6px; }
+    .small { font-size: 12px; }
+  </style>
+</head>
+
+<body>
+  <h1>HELP Classification CGPA Calculator (by HOA TIẾN ĐẠT)</h1>
+  <div class="muted">Nhập điểm theo thang 4.00, tính CGPA + xếp loại, và xuất file Excel (Kết quả chỉ mang tính chất THAM KHẢO).</div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Chuyên ngành</label>
+        <select id="major">
+          <option value="marketing">Marketing từ K10 trở về trước</option>
+          <option value="other">Marketing từ K11 trở về sau/ Các chuyên ngành khác</option>
+        </select>
+      </div>
+      <div>
+        <label>Năm nhập học</label>
+        <input id="intakeYear" type="number" placeholder="VD: 2021, 2022..." min="1900" max="2100" />
+        <div class="hint">Năm &lt; 2022 → quy tắc 12 môn (denominator 12.5). Năm ≥ 2022 → 10 môn (denominator 10.5).</div>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:10px;">
+      <button class="primary" id="btnLoad">Tạo form nhập điểm</button>
+      <button class="secondary" id="btnReset">Reset</button>
+    </div>
+    <div id="topMsg" class="error" style="display:none;"></div>
+  </div>
+
+  <div class="card" id="courseCard" style="display:none;">
+    <div class="split">
+      <div>
+        <strong>Nhập điểm</strong>
+        <div class="muted small" id="ruleInfo"></div>
+      </div>
+      <div class="actions" style="justify-content:flex-end;">
+        <button class="secondary" id="btnAddL3" style="display:none;">+ Thêm môn Level 3</button>
+        <button class="secondary" id="btnAddL2" style="display:none;">+ Thêm môn Level 2</button>
+        <button class="secondary" id="btnBrochure" style="display:none;">Xem môn theo Level/Compulsory</button>
+      </div>
+    </div>
+
+    <div style="margin-top:10px; overflow:auto; max-height: 420px;">
+      <table id="courseTable">
+        <thead>
+          <tr>
+            <th style="width:140px;">Mã môn</th>
+            <th>Tên môn</th>
+            <th style="width:70px;">Level</th>
+            <th style="width:120px;">Compulsory?</th>
+            <th style="width:120px;">Điểm (2.00–4.00)</th>
+            <th style="width:160px;">Trạng thái</th>
+            <th style="width:70px;">Xoá</th>
+          </tr>
+        </thead>
+        <tbody id="courseTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="actions" style="margin-top:12px;">
+      <button class="primary" id="btnCalc">Tính CGPA</button>
+      <button class="secondary" id="btnExport" disabled>Xuất Excel</button>
+    </div>
+
+    <div id="calcMsg" class="error" style="display:none;"></div>
+    <div id="calcOk" class="success" style="display:none;"></div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <strong>Kết quả</strong>
+    <div style="margin-top:10px;" id="resultBox"></div>
+    <div class="hint">Excel sẽ có 2 sheet: <b>Tổng Quan (Summary)</b> và <b>Chi Tiết Điểm (Course Details)</b>.</div>
+  </div>
+
+<script>
+/** ---------- Data Catalogs ---------- */
+const marketingCatalogTemplate = [
+  { code:"MGT400", name:"Graduation Project", level:"L3", compulsory:true },
+  { code:"MKT301", name:"Integrated Marketing Communication", level:"L3", compulsory:true },
+  { code:"MKT302", name:"Strategic Global Marketing", level:"L3", compulsory:true },
+  { code:"MKT303", name:"Marketing Research", level:"L3", compulsory:true },
+  { code:"MKT304", name:"Competitive Marketing Planning & Strategy", level:"L3", compulsory:true },
+  { code:"MKT306", name:"Service Marketing", level:"L3", compulsory:true },
+  { code:"MKT311", name:"Innovative Product Development and Management", level:"L3", compulsory:true },
+  { code:"MGT303", name:"Corporate Policy & Strategy", level:"L3", compulsory:false },  // special: can be replaced by MGT301 compulsory
+  { code:"MGT305", name:"Business Ethics & Social Responsibility", level:"L3", compulsory:false },
+  { code:"FIN201", name:"Financial Management", level:"L2", compulsory:true },
+  { code:"HRM201", name:"Human Resources Management", level:"L2", compulsory:true },
+  { code:"MGT212", name:"Business Analytics for Decision Making", level:"L2", compulsory:true },
+  { code:"MKT201", name:"Consumer Behaviour", level:"L2", compulsory:true },
+  { code:"MKT203", name:"Distribution & Logistics Management", level:"L2", compulsory:true },
+  { code:"MKT205", name:"Sales Management", level:"L2", compulsory:true },
+  { code:"MKT207", name:"Product Management", level:"L2", compulsory:true },
+  { code:"MKT209", name:"Digital Marketing", level:"L2", compulsory:true },
+  { code:"MGT204", name:"Asian Entrepreneurship & Innovation", level:"L2", compulsory:false },
+  { code:"MKT211", name:"E-commerce", level:"L2", compulsory:false }, // special: can be replaced by MGT200 non-compulsory
+  { code:"MGT202", name:"E-business", level:"L2", compulsory:false }
+];
+
+// Replacement rules (still replace), but we display replacement directly in Code/Name columns when skipped
+const replacementMap = {
+  "MGT303": { code: "MGT301", name: "Operation Management", level: "L3", compulsory: true },
+  "MKT211": { code: "MGT200", name: "Small Business Management", level: "L2", compulsory: false }
+};
+
+function deepCopy(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+/** helper: current display fields (original or replaced) */
+function getDisplayCourse(course){
+  if(course._replacedFrom && replacementMap[course._replacedFrom]) {
+    const r = replacementMap[course._replacedFrom];
+    return { code: r.code, name: r.name, level: r.level, compulsory: r.compulsory };
+  }
+  return { code: course.code, name: course.name, level: course.level, compulsory: course.compulsory };
+}
+
+/** ---------- State ---------- */
+let courseCatalog = [];
+let computed = null;
+let rule = null;
+let uidCounter = 1;
+
+/** ---------- Helpers ---------- */
+function isValidGrade(v){
+  if (v === "" || v === null || v === undefined) return false;
+  const x = Number(v);
+  return Number.isFinite(x) && x >= 2.0 && x <= 4.0;
+}
+function isNonEmptyText(s){
+  return typeof s === "string" && s.trim().length > 0;
+}
+function show(el){ el.style.display = ""; }
+function hide(el){ el.style.display = "none"; }
+function setMsg(id, text, type){
+  const el = document.getElementById(id);
+  el.textContent = text || "";
+  if(!text){ hide(el); return; }
+  el.className = type === "ok" ? "success" : "error";
+  show(el);
+}
+function nextUid(){ return String(uidCounter++); }
+
+
+// ---------- Brochure button (Course list by Level/Compulsory) ----------
+const BROCHURE_URL = "https://university.help.edu.my/wp-content/uploads/2023/12/2024_Brochure_Business.pdf";
+
+function updateBrochureButtonVisibility(){
+  const major = document.getElementById("major")?.value;
+  const btn = document.getElementById("btnBrochure");
+  if(!btn) return;
+
+  // Show for: "Marketing từ K11 trở về sau/ Các chuyên ngành khác" (value="other")
+  btn.style.display = (major === "other") ? "" : "none";
+}
+
+function openBrochure(){
+  window.open(BROCHURE_URL, "_blank", "noopener,noreferrer");
+}
+
+/** ---------- UI Rendering ---------- */
+function renderCourses(){
+  const tbody = document.getElementById("courseTbody");
+  tbody.innerHTML = "";
+
+  const major = document.getElementById("major").value;
+
+  courseCatalog.forEach((c, idx) => {
+    const disp = getDisplayCourse(c);
+    const isSpecial = (major === "marketing") && (c.code === "MGT303" || c.code === "MKT211");
+    const isEditableCourse = (major === "other" && c._generic === true); // ✅ only other majors' generic courses are editable
+
+    const tr = document.createElement("tr");
+
+    // code
+    const tdCode = document.createElement("td");
+    const inpCode = document.createElement("input");
+    inpCode.value = disp.code;
+    inpCode.disabled = !isEditableCourse; // ✅ user can type custom code for "other"
+    inpCode.placeholder = "VD: ACC301";
+    inpCode.addEventListener("input", () => {
+      if(!isEditableCourse) return;
+      c.code = inpCode.value;  // store user's code
+      computed=null;
+      document.getElementById("btnExport").disabled=true;
+    });
+    tdCode.appendChild(inpCode);
+
+    // name
+    const tdName = document.createElement("td");
+    const inpName = document.createElement("input");
+    inpName.value = disp.name;
+    inpName.disabled = !isEditableCourse; // ✅ user can type custom name for "other"
+    inpName.placeholder = "Tên môn do bạn nhập";
+    inpName.addEventListener("input", () => {
+      if(!isEditableCourse) return;
+      c.name = inpName.value;  // store user's name
+      computed=null;
+      document.getElementById("btnExport").disabled=true;
+    });
+    tdName.appendChild(inpName);
+
+    // level
+    const tdLevel = document.createElement("td");
+    const selLevel = document.createElement("select");
+    ["L3","L2"].forEach(l=>{
+      const opt=document.createElement("option");
+      opt.value=l; opt.textContent=l;
+      if(disp.level===l) opt.selected=true;
+      selLevel.appendChild(opt);
+    });
+    selLevel.disabled = true;
+    tdLevel.appendChild(selLevel);
+
+    // compulsory
+    const tdComp = document.createElement("td");
+    const selComp = document.createElement("select");
+    const optY=document.createElement("option"); optY.value="true"; optY.textContent="Yes";
+    const optN=document.createElement("option"); optN.value="false"; optN.textContent="No";
+    selComp.appendChild(optY); selComp.appendChild(optN);
+    selComp.value = String(!!disp.compulsory);
+
+    // For other majors: generic courses allow edit compulsory
+    if(major === "other" && c._generic === true){
+      selComp.disabled = false;
+      selComp.addEventListener("change", () => {
+        c.compulsory = (selComp.value === "true");
+        computed=null;
+        document.getElementById("btnExport").disabled=true;
+      });
+    } else {
+      selComp.disabled = true;
+    }
+    tdComp.appendChild(selComp);
+
+    // grade
+    const tdGrade = document.createElement("td");
+    const inpGrade = document.createElement("input");
+    inpGrade.type="number"; inpGrade.step="0.25"; inpGrade.min="2"; inpGrade.max="4";
+    inpGrade.placeholder="2.00 - 4.00";
+    inpGrade.value = (c.grade ?? "");
+    inpGrade.addEventListener("input", () => {
+      const v = inpGrade.value.trim();
+      c.grade = v === "" ? null : Number(v);
+      computed=null;
+      document.getElementById("btnExport").disabled=true;
+    });
+    tdGrade.appendChild(inpGrade);
+
+    // status / skip
+    const tdStatus = document.createElement("td");
+    if(isSpecial){
+      const wrap = document.createElement("div");
+      wrap.style.display = "flex";
+      wrap.style.gap = "8px";
+      wrap.style.alignItems = "center";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.style.width = "16px";
+      cb.style.height = "16px";
+      cb.checked = !!c._replacedFrom;
+
+      const lbl = document.createElement("span");
+      lbl.textContent = "Không học";
+
+      cb.addEventListener("change", () => {
+        if(cb.checked){
+          c._replacedFrom = c.code;  // "MGT303" or "MKT211"
+          c.grade = null;            // user must input grade for replacement course
+        } else {
+          c._replacedFrom = null;
+          c.grade = null;            // reset to avoid mixing grades
+        }
+        computed=null;
+        document.getElementById("btnExport").disabled=true;
+        renderCourses();
+      });
+
+      const badge = document.createElement("span");
+      badge.className = "pill warn";
+      badge.textContent = c._replacedFrom ? "Đang replace" : "Môn gốc";
+
+      wrap.appendChild(cb);
+      wrap.appendChild(lbl);
+      wrap.appendChild(badge);
+      tdStatus.appendChild(wrap);
+    } else if (major === "other" && c._generic) {
+      tdStatus.innerHTML = `<span class="muted">Bạn tự nhập mã/tên</span>`;
+    } else {
+      tdStatus.innerHTML = `<span class="muted">—</span>`;
+    }
+
+    // delete
+    const tdDel = document.createElement("td");
+    const btnDel = document.createElement("button");
+    btnDel.textContent = "Xoá";
+    btnDel.className = "danger";
+    btnDel.disabled = !(major === "other" && c._generic === true);
+    btnDel.addEventListener("click", () => {
+      courseCatalog.splice(idx,1);
+      computed=null;
+      document.getElementById("btnExport").disabled=true;
+      renderCourses();
+    });
+    tdDel.appendChild(btnDel);
+
+    [tdCode, tdName, tdLevel, tdComp, tdGrade, tdStatus, tdDel].forEach(td => tr.appendChild(td));
+    tbody.appendChild(tr);
+  });
+}
+
+function updateRuleInfo(){
+  const major = document.getElementById("major").value;
+  const intakeYear = Number(document.getElementById("intakeYear").value);
+
+  if(!Number.isInteger(intakeYear)){
+    rule = null;
+    document.getElementById("ruleInfo").textContent = "";
+    return;
+  }
+  if (intakeYear < 2022){
+    rule = { rule_type:"12_subject", num_l3:7, num_others:5, denominator:12.5 };
+  } else {
+    rule = { rule_type:"10_subject", num_l3:7, num_others:3, denominator:10.5 };
+  }
+  document.getElementById("ruleInfo").innerHTML =
+    `Quy tắc: <b>${rule.rule_type}</b> | Chọn L3: <b>${rule.num_l3}</b> | Chọn Others: <b>${rule.num_others}</b> | Denominator: <b>${rule.denominator}</b> | Major: <b>${major==="marketing"?"Marketing":"Ngành khác"}</b>`;
+}
+
+/** ---------- Build catalogs ---------- */
+function buildCatalog(){
+  const major = document.getElementById("major").value;
+  const intakeYear = Number(document.getElementById("intakeYear").value);
+
+  if(!Number.isInteger(intakeYear)){
+    setMsg("topMsg","Vui lòng nhập năm nhập học hợp lệ (số nguyên).","err");
+    return false;
+  }
+  setMsg("topMsg","", "err");
+
+  updateRuleInfo();
+
+  uidCounter = 1;
+
+  if(major === "marketing"){
+    courseCatalog = deepCopy(marketingCatalogTemplate).map(x => ({
+      ...x,
+      _id: nextUid(),
+      grade: null,
+      _replacedFrom: null
+    }));
+  } else {
+    // Other majors: start with MGT400 + allow adding custom courses (user inputs code/name)
+    courseCatalog = [{
+      _id: nextUid(),
+      code:"MGT400", name:"Graduation Project", level:"L3", compulsory:true,
+      grade:null, _replacedFrom:null
+    }];
+  }
+
+  computed = null;
+  document.getElementById("btnExport").disabled = true;
+
+  // show/hide add buttons
+  document.getElementById("btnAddL3").style.display = (major === "other") ? "" : "none";
+  document.getElementById("btnAddL2").style.display = (major === "other") ? "" : "none";
+
+  renderCourses();
+  updateBrochureButtonVisibility();
+
+  show(document.getElementById("courseCard"));
+  hide(document.getElementById("resultCard"));
+  setMsg("calcMsg","", "err");
+  setMsg("calcOk","", "ok");
+
+  return true;
+}
+
+/** ---------- Selection algorithm (ported from Python) ---------- */
+function computeSelection(){
+  const major = document.getElementById("major").value;
+  const intakeYear = Number(document.getElementById("intakeYear").value);
+  const majorName = major === "marketing" ? "Marketing" : "Ngành Khác";
+
+  if(!rule) updateRuleInfo();
+  if(!rule){
+    return { ok:false, error:"Thiếu năm nhập học / quy tắc." };
+  }
+
+  // materialize catalog for calculation: if a row is replaced, use replacement code/name/level/compulsory
+  let catalog = deepCopy(courseCatalog).map(c => {
+    if(c._replacedFrom && replacementMap[c._replacedFrom]){
+      const r = replacementMap[c._replacedFrom];
+      return { ...c, code: r.code, name: r.name, level: r.level, compulsory: r.compulsory };
+    }
+    return c;
+  });
+
+  // For other majors: require user to input code/name for generic courses
+  if(major === "other"){
+    const missingMeta = catalog
+      .filter(c => c._generic === true)
+      .filter(c => !isNonEmptyText(c.code) || !isNonEmptyText(c.name))
+      .map(c => c._id);
+    if(missingMeta.length){
+      return { ok:false, error:"Ngành khác: vui lòng nhập đầy đủ Mã môn và Tên môn cho tất cả các môn bạn thêm." };
+    }
+  }
+
+  // Validate required grades for all rows
+  const missingGrades = catalog.filter(c => !isValidGrade(c.grade)).map(c => `${c.code} - ${c.name}`);
+  if(missingGrades.length){
+    return { ok:false, error:`Bạn chưa nhập điểm hợp lệ (2.0–4.0) cho: ${missingGrades.join(", ")}` };
+  }
+
+  // L3 courses
+  const l3 = catalog.filter(c => c.level === "L3");
+
+  // Must have MGT400 (by code)
+  const project = l3.find(c => c.code === "MGT400");
+  if(!project){
+    return { ok:false, error:"Không tìm thấy môn MGT400." };
+  }
+
+  let selected = [];
+  selected.push(project);
+
+  // other L3 compulsory (excluding MGT400) -> top 3 by grade
+  const otherL3Comp = l3
+    .filter(c => c.compulsory && c.code !== "MGT400")
+    .sort((a,b)=> b.grade - a.grade);
+  selected.push(...otherL3Comp.slice(0,3));
+
+  // fill remaining L3 slots up to num_l3 from remaining L3 by grade
+  const selectedIds = new Set(selected.map(c=>c._id)); // ✅ use internal id to avoid issues if user duplicates codes
+  const remainingL3 = l3.filter(c => !selectedIds.has(c._id)).sort((a,b)=> b.grade - a.grade);
+  const slotsLeftL3 = rule.num_l3 - selected.length;
+  if(slotsLeftL3 > 0){
+    selected.push(...remainingL3.slice(0, slotsLeftL3));
+  }
+
+  // remaining pool for "others"
+  const selectedSoFar = new Set(selected.map(c=>c._id));
+  const remainingAll = catalog.filter(c => !selectedSoFar.has(c._id));
+
+  // pick top 2 compulsory from remaining pool
+  const remainingComp = remainingAll.filter(c=>c.compulsory).sort((a,b)=> b.grade - a.grade);
+  let selectedOthers = remainingComp.slice(0,2);
+
+  // fill other slots with top grades from remaining (excluding already in selectedOthers)
+  const selectedOthersIds = new Set(selectedOthers.map(c=>c._id));
+  const finalPool = remainingAll.filter(c => !selectedOthersIds.has(c._id)).sort((a,b)=> b.grade - a.grade);
+  const slotsLeftOthers = rule.num_others - selectedOthers.length;
+  if(slotsLeftOthers > 0){
+    selectedOthers.push(...finalPool.slice(0, slotsLeftOthers));
+  }
+
+  selected.push(...selectedOthers);
+
+  // Compute quality points
+  let totalQualityPoints = 0;
+  selected.forEach(c => {
+    const weight = (c.code === "MGT400") ? 1.5 : 1.0;
+    totalQualityPoints += c.grade * weight;
+  });
+
+  let cgpa = totalQualityPoints / rule.denominator;
+  if(cgpa > 4.0) cgpa = 4.0;
+
+  let honours = "Not Classified / Fail";
+  if(cgpa >= 3.75 && cgpa <= 4.00) honours = "First Class";
+  else if(cgpa >= 3.25) honours = "Second Upper Class";
+  else if(cgpa >= 2.75) honours = "Second Lower Class";
+  else if(cgpa >= 2.50) honours = "Third Class";
+
+  return {
+    ok:true,
+    catalog,
+    selected,
+    cgpa,
+    honours,
+    totalQualityPoints,
+    majorName,
+    intakeYear,
+    rule_type: rule.rule_type,
+    denominator: rule.denominator
+  };
+}
+
+/** ---------- Excel Export ---------- */
+function exportExcel(){
+  if(!computed || !computed.ok) return;
+
+  const { catalog, selected, majorName, intakeYear, rule_type, denominator, totalQualityPoints, cgpa, honours } = computed;
+
+  const selectedIds = new Set(selected.map(c=>c._id));
+
+  // Build Course Details like pandas output (use user-entered code/name for "other")
+  const details = catalog.map(c => {
+    let included = "❌";
+    if(c.code === "MGT400") included = "✔️ (Weighted 1.5x)";
+    else if(selectedIds.has(c._id)) included = "✔️";
+
+    return {
+      "Mã Môn": (c.code || "").trim(),
+      "Tên Môn": (c.name || "").trim(),
+      "Cấp Độ": c.level,
+      "Môn Bắt Buộc (Compulsory)": c.compulsory ? "Yes" : "No",
+      "Điểm": Number(c.grade.toFixed(2)),
+      "Trạng Thái Tính CGPA": included
+    };
+  });
+
+  // Sort similar to python: Trạng Thái desc then Điểm desc
+  const rankIncluded = (s) => s.startsWith("✔️") ? 2 : 1;
+  details.sort((a,b)=>{
+    const r = rankIncluded(b["Trạng Thái Tính CGPA"]) - rankIncluded(a["Trạng Thái Tính CGPA"]);
+    if(r!==0) return r;
+    return b["Điểm"] - a["Điểm"];
+  });
+
+  const summary = [
+    { "Thông Tin":"Chuyên Ngành", "Kết Quả": majorName },
+    { "Thông Tin":"Năm Nhập Học", "Kết Quả": intakeYear },
+    { "Thông Tin":"Quy Tắc Áp Dụng", "Kết Quả": rule_type },
+    { "Thông Tin":"Tổng Denominator", "Kết Quả": denominator },
+    { "Thông Tin":"Total Quality Points", "Kết Quả": Number(totalQualityPoints.toFixed(3)) },
+    { "Thông Tin":"CLASSIFICATION GPA", "Kết Quả": Number(cgpa.toFixed(2)) },
+    { "Thông Tin":"XẾP LOẠI HONOURS", "Kết Quả": honours }
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const wsSummary = XLSX.utils.json_to_sheet(summary);
+  const wsDetails = XLSX.utils.json_to_sheet(details);
+
+  wsSummary["!cols"] = [{wch:28},{wch:40}];
+  wsDetails["!cols"] = [{wch:14},{wch:48},{wch:8},{wch:22},{wch:8},{wch:22}];
+
+  XLSX.utils.book_append_sheet(wb, wsSummary, "Tổng Quan (Summary)");
+  XLSX.utils.book_append_sheet(wb, wsDetails, "Chi Tiết Điểm (Course Details)");
+
+  XLSX.writeFile(wb, "CGPA_Result_Final.xlsx");
+}
+
+/** ---------- Event handlers ---------- */
+document.getElementById("btnLoad").addEventListener("click", () => {
+  if(buildCatalog()){
+    updateRuleInfo();
+  }
+});
+
+document.getElementById("btnReset").addEventListener("click", () => {
+  courseCatalog = [];
+  computed = null;
+  rule = null;
+  document.getElementById("intakeYear").value = "";
+  hide(document.getElementById("courseCard"));
+  hide(document.getElementById("resultCard"));
+  setMsg("topMsg","", "err");
+  updateBrochureButtonVisibility();
+});
+
+// Brochure button
+document.getElementById("btnBrochure")?.addEventListener("click", openBrochure);
+
+document.getElementById("major").addEventListener("change", () => {
+  updateRuleInfo();
+  updateBrochureButtonVisibility();
+});
+document.getElementById("intakeYear").addEventListener("input", () => {
+  updateRuleInfo();
+});
+
+document.getElementById("btnAddL3").addEventListener("click", () => addGeneric("L3"));
+document.getElementById("btnAddL2").addEventListener("click", () => addGeneric("L2"));
+
+function addGeneric(level){
+  const idx = courseCatalog.filter(c => c._generic && c.level === level).length + 1;
+  courseCatalog.push({
+    _id: nextUid(),
+    code: "",
+    name: "",
+    level,
+    compulsory: false,
+    grade: null,
+    _generic: true,
+    _replacedFrom: null
+  });
+
+  // Provide gentle defaults (optional) – user can overwrite
+  courseCatalog[courseCatalog.length - 1].code = `${level}_CUSTOM_${idx}`;
+  courseCatalog[courseCatalog.length - 1].name = `Môn ${level} (tự nhập) ${idx}`;
+
+  computed = null;
+  document.getElementById("btnExport").disabled = true;
+  renderCourses();
+}
+
+document.getElementById("btnCalc").addEventListener("click", () => {
+  setMsg("calcMsg","", "err");
+  setMsg("calcOk","", "ok");
+  hide(document.getElementById("resultCard"));
+
+  const res = computeSelection();
+  if(!res.ok){
+    computed = null;
+    document.getElementById("btnExport").disabled = true;
+    setMsg("calcMsg", res.error, "err");
+    return;
+  }
+
+  computed = res;
+
+  const selList = res.selected
+    .sort((a,b)=> (a.level===b.level ? b.grade-a.grade : (a.level==="L3" ? -1 : 1)))
+    .map(c => {
+      const weight = c.code === "MGT400" ? " (1.5x)" : "";
+      return `<li><b>${c.code}</b> — ${c.name} — ${c.level} — Grade: ${c.grade.toFixed(2)}${weight}</li>`;
+    }).join("");
+
+  const html = `
+    <div class="split">
+      <div>
+        <div><span class="pill ok">CGPA: ${res.cgpa.toFixed(2)}</span> <span class="pill warn">Honours: ${res.honours}</span></div>
+        <div class="muted" style="margin-top:6px;">
+          Rule: <b>${res.rule_type}</b> | Denominator: <b>${res.denominator}</b> | Total Quality Points: <b>${res.totalQualityPoints.toFixed(3)}</b>
+        </div>
+      </div>
+      <div>
+        <div class="muted">Các môn được chọn theo quy tắc:</div>
+        <ol style="margin:8px 0 0 18px;">${selList}</ol>
+      </div>
+    </div>
+  `;
+  document.getElementById("resultBox").innerHTML = html;
+
+  show(document.getElementById("resultCard"));
+  setMsg("calcOk","✅ Tính xong. Bạn có thể xuất Excel ngay.", "ok");
+  document.getElementById("btnExport").disabled = false;
+});
+
+document.getElementById("btnExport").addEventListener("click", () => {
+  setMsg("calcMsg","", "err");
+  if(!computed || !computed.ok){
+    setMsg("calcMsg","Bạn cần bấm 'Tính CGPA' trước khi xuất Excel.", "err");
+    return;
+  }
+  exportExcel();
+});
+</script>
+
+<footer style="margin-top:60px;padding:30px 20px;background:#f5f5f5;border-top:1px solid #e0e0e0;font-size:12px;color:#777;line-height:1.6;">
+<div style="max-width:900px;margin:auto;">
+<b>Classification Rules</b><br><br>
+
+(i) The classification will be based on a fixed system, on a total of 12 subjects, taken as follows:<br>
+- The best 7 Third Year subjects which must include:<br>
+a) The Project paper, if the Project paper is a compulsory subject for the degree; and<br>
+b) At least three other core/major subjects<br>
+- The best five from the remaining Level 3 subjects and all Level 2 subjects, which must include at least 2 compulsory/major subjects.<br><br>
+
+(ii) With effect from January 2022 intake onwards, the classification will be based on a total of 10 courses, i.e. best 7/3 courses will be taken<br>
+- The best 7 Third Year courses which must include:<br>
+a) The Project paper, if the Project paper is a compulsory subject for the degree; and<br>
+b) At least three other core/major courses<br>
+- The best three from the remaining Level 3 subjects and all Level 2 subjects, which must include at least 2 compulsory/major courses.<br><br>
+
+Source: <a href="https://isfm.ufm.edu.vn/handbook-chuong-trinh-cu-nhan-kinh-doanh-lien-ket-dai-hoc-help-malaysia--78.html" target="_blank" style="color:#666;text-decoration:underline;">
+STUDENT HANDBOOK 2025
+</a> – HELP University.
+</div>
+</footer>
+
+</body>
+</html>
