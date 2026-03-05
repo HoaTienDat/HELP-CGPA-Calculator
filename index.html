@@ -13,85 +13,191 @@ updateBrochureButtonVisibility();
 </script>
 
   <style>
-    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    body { margin: 18px; background: #fafafa; color: #111; }
-    h1 { margin: 0 0 8px; font-size: 20px; }
-    .card { background: #fff; border: 1px solid #e6e6e6; border-radius: 12px; padding: 14px; margin: 12px 0; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { font-size: 12px; color: #444; display: block; margin-bottom: 6px; }
-    input, select, button {
-      width: 100%; padding: 10px; border: 1px solid #dcdcdc; border-radius: 10px; background: #fff;
-      font-size: 14px; box-sizing: border-box;
-    }
-    button { cursor: pointer; font-weight: 600; }
-    button.primary { border-color: #0b5; background: #0b5; color: #fff; }
-    button.secondary { border-color: #bbb; background: #f5f5f5; }
-    button.danger { border-color: #c33; background: #c33; color: #fff; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .hint { font-size: 12px; color: #666; margin-top: 6px; }
-    .muted { color: #777; font-size: 12px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border-bottom: 1px solid #eee; text-align: left; padding: 8px; font-size: 13px; vertical-align: top; }
-    th { font-size: 12px; color: #444; background: #fcfcfc; position: sticky; top: 0; }
-    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
-    .ok { background: #e6fff0; color: #084; border: 1px solid #bdf0cf; }
-    .warn { background: #fff8e6; color: #8a5a00; border: 1px solid #f1ddaa; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .split { display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
-    .split > * { flex: 1 1 240px; }
-    .error { color: #b00; font-size: 12px; margin-top: 6px; }
-    .success { color: #085; font-size: 12px; margin-top: 6px; }
-    .small { font-size: 12px; }
-  
-    /* ===== Mobile-first layout overrides (2026-03) ===== */
-    body { margin: 12px; }
-    .card { padding: 12px; border-radius: 14px; }
-    .row { grid-template-columns: 1fr; }
-    .split { flex-direction: column; align-items: stretch; }
-    .actions { gap: 8px; }
-    input, select, button { padding: 12px; border-radius: 12px; }
-    button { min-height: 44px; }
+  :root{
+    --bg:#fafafa;
+    --card:#fff;
+    --text:#111;
+    --muted:#777;
+    --border:#e6e6e6;
+    --border-2:#dcdcdc;
+    --shadow:0 1px 4px rgba(0,0,0,.04);
+    --r:12px;
+    --space-1:4px;
+    --space-2:8px;
+    --space-3:12px;
+    --space-4:16px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color-scheme: light;
+  }
 
-    /* Table: keep fields readable on phone by allowing horizontal scroll */
-    .table-wrapper{
-      margin-top:10px;
-      max-height: 420px;
-      overflow-y: auto;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      border: 1px solid #eee;
-      border-radius: 12px;
-      background: #fff;
-    }
+  /* Layout (mobile-first) */
+  body{
+    margin: 12px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  h1{
+    margin: 0 0 var(--space-2);
+    font-size: 20px;
+    line-height: 1.25;
+  }
 
-    #courseTable{
-      width: 100%;
-      min-width: 980px; /* prevents columns from collapsing on mobile */
-      border-collapse: collapse;
-    }
+  .card{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 12px;
+    margin: 10px 0;
+    box-shadow: var(--shadow);
+  }
 
-    #courseTable th, #courseTable td { white-space: nowrap; }
-    #courseTable td:nth-child(2), #courseTable th:nth-child(2) { white-space: normal; min-width: 320px; } /* course name */
-    #courseTable td:nth-child(1), #courseTable th:nth-child(1) { min-width: 140px; } /* code */
-    #courseTable td:nth-child(5), #courseTable th:nth-child(5) { min-width: 150px; } /* grade */
-    #courseTable input, #courseTable select{
-      min-width: 140px;
-      height: 44px;           /* better touch target */
-      font-size: 16px;        /* prevents iOS zoom on focus */
-    }
+  .row{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 
-    /* Make long buttons not cramped on phone */
-    .actions > button { flex: 1 1 180px; }
+  label{
+    font-size: 12px;
+    color:#444;
+    display:block;
+    margin-bottom: 6px;
+  }
 
-    /* Desktop enhancements */
-    @media (min-width: 900px){
-      body { margin: 18px; }
-      .row { grid-template-columns: 1fr 1fr; }
-      .split { flex-direction: row; align-items: center; }
-      #courseTable{ min-width: 900px; }
-      #courseTable input, #courseTable select{ font-size: 14px; }
-    }
-    
+  /* Inputs: mobile-friendly (avoid iOS zoom by >=16px) */
+  input, select, button{
+    width:100%;
+    padding: 10px;
+    border:1px solid var(--border-2);
+    border-radius: 10px;
+    background:#fff;
+    font-size:16px;
+    line-height: 1.2;
+    box-sizing:border-box;
+  }
+
+  button{
+    cursor:pointer;
+    font-weight:600;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button.primary{ border-color:#0b5; background:#0b5; color:#fff; }
+  button.secondary{ border-color:#bbb; background:#f5f5f5; }
+  button.danger{ border-color:#c33; background:#c33; color:#fff; }
+  button:disabled{ opacity:.6; cursor:not-allowed; }
+
+  .hint{ font-size:12px; color:#666; margin-top:6px; }
+  .muted{ color: var(--muted); font-size:12px; }
+  .small{ font-size:12px; }
+
+  /* Actions */
+  .actions{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .actions > button{
+    flex: 1 1 220px; /* wrap nicely on mobile */
+  }
+
+  /* Header block above table */
+  .split{
+    display:flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items:flex-start;
+    margin-bottom: 4px; /* reduce whitespace before table */
+  }
+  .split > *{ flex: 1 1 240px; }
+  .split strong{
+    display:block;
+    margin-bottom: 2px;
+  }
+  #ruleInfo{ margin-top: 2px; }
+
+  /* Table container: keep inputs readable, allow horizontal scroll */
+  .table-wrapper{
+    margin-top: 4px;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 420px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table{
+    width:100%;
+    border-collapse: collapse;
+  }
+
+  #courseTable{
+    min-width: 980px; /* keep columns readable on phones; scroll horizontally */
+  }
+
+  th, td{
+    border-bottom: 1px solid #eee;
+    text-align:left;
+    padding: 8px;
+    font-size: 13px;
+    vertical-align: top;
+    white-space: nowrap; /* avoid squishing headings */
+  }
+  td{ white-space: normal; } /* allow content wrap in cells if needed */
+
+  th{
+    font-size: 12px;
+    color:#444;
+    background:#fcfcfc;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  /* Inputs inside table: keep width stable */
+  #courseTable input,
+  #courseTable select{
+    min-width: 120px;
+    font-size: 16px;
+  }
+
+  /* Pills */
+  .pill{
+    display:inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .ok{ background:#e6fff0; color:#084; border:1px solid #bdf0cf; }
+  .no{ background:#fff0f0; color:#900; border:1px solid #f3bcbc; }
+  .warn{ background:#fff8e6; color:#8a5a00; border:1px solid #f1ddaa; }
+
+  .error{ color:#b00; font-size:12px; margin-top:6px; }
+  .success{ color:#085; font-size:12px; margin-top:6px; }
+
+  /* Footer/source note */
+  footer{
+    margin-top: 14px;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    background: #f5f5f5;
+    color: #777;
+    font-size: 12px;
+    border-radius: var(--r);
+  }
+  footer a{ color: inherit; text-decoration: underline; }
+
+  /* Desktop enhancements */
+  @media (min-width: 900px){
+    body{ margin: 18px; }
+    .card{ padding: 14px; margin: 12px 0; }
+    .row{ grid-template-columns: 1fr 1fr; }
+    .split{ flex-direction: row; align-items: center; gap: 10px; margin-bottom: 6px; }
+    input, select, button{ font-size:14px; }
+    #courseTable input, #courseTable select{ font-size:14px; min-width: 110px; }
+    #courseTable{ min-width: 900px; }
+    .actions > button{ flex: 0 0 auto; }
+  }
   </style>
 </head>
 
@@ -111,7 +217,7 @@ updateBrochureButtonVisibility();
       <div>
         <label>Năm nhập học</label>
         <input id="intakeYear" type="number" placeholder="VD: 2021, 2022..." min="1900" max="2100" />
-        <div class="hint">Năm &lt; 2022 → quy tắc 12 môn (denominator 12.5). Năm ≥ 2022 → 10 môn (denominator 10.5).</div>
+        <div class="hint">Năm &lt; 2022 → quy tắc* 12 môn (denominator 12.5). Năm ≥ 2022 → quy tắc* 10 môn (denominator 10.5).</div>
       </div>
     </div>
 
@@ -746,7 +852,7 @@ document.getElementById("btnExport").addEventListener("click", () => {
 
 <footer style="margin-top:60px;padding:30px 20px;background:#f5f5f5;border-top:1px solid #e0e0e0;font-size:12px;color:#777;line-height:1.6;">
 <div style="max-width:900px;margin:auto;">
-<b>Classification Rules</b><br><br>
+<b>(*)Classification Rules</b><br><br>
 
 (i) The classification will be based on a fixed system, on a total of 12 subjects, taken as follows:<br>
 - The best 7 Third Year subjects which must include:<br>
