@@ -215,14 +215,14 @@ updateBrochureButtonVisibility();
         </select>
       </div>
       <div>
-        <label>Năm nhập học</label>
+        <label>Năm nhập học (dựa theo 2 số đầu của MSSV HELP, VD: E2100272 → 2021)</label>
         <input id="intakeYear" type="number" placeholder="VD: 2021, 2022..." min="1900" max="2100" />
         <div class="hint">Năm &lt; 2022 → quy tắc* 12 môn (denominator 12.5). Năm ≥ 2022 → quy tắc* 10 môn (denominator 10.5).</div>
       </div>
     </div>
 
     <div class="actions" style="margin-top:10px;">
-      <button class="primary" id="btnLoad">Tạo form nhập điểm</button>
+      <button class="primary" id="btnLoad">Nhập điểm</button>
       <button class="secondary" id="btnReset">Reset</button>
     </div>
     <div id="topMsg" class="error" style="display:none;"></div>
