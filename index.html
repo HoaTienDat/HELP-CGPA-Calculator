@@ -203,7 +203,7 @@ updateBrochureButtonVisibility();
 
 <body>
   <h1>HELP Classification CGPA Calculator (by HOA TIẾN ĐẠT)</h1>
-  <div class="muted">Nhập điểm theo thang 4.00, tính CGPA + xếp loại, và xuất file Excel (Kết quả chỉ mang tính chất THAM KHẢO).</div>
+  <div class="muted">Nhập điểm theo thang 4.00, tính CGPA + xếp loại**, và xuất file Excel <i>(Kết quả chỉ mang tính chất tham khảo)</i>.</div>
 
   <div class="card">
     <div class="row">
@@ -216,7 +216,7 @@ updateBrochureButtonVisibility();
       </div>
       <div>
         <label>Năm nhập học (dựa theo 2 số đầu của MSSV HELP, VD: E2100272 → 2021)</label>
-        <input id="intakeYear" type="number" placeholder="VD: 2021, 2022..." min="2020" max="2050" />
+        <input id="intakeYear" type="number" placeholder="VD: 2021" min="2020" max="2050" />
         <div class="hint">Năm &lt; 2022 → quy tắc* 12 môn (denominator 12.5). Năm ≥ 2022 → quy tắc* 10 môn (denominator 10.5).</div>
       </div>
     </div>
@@ -673,6 +673,7 @@ function computeSelection(){
   else if(cgpa >= 3.25) honours = "Second Upper Class";
   else if(cgpa >= 2.75) honours = "Second Lower Class";
   else if(cgpa >= 2.50) honours = "Third Class";
+  else if(cgpa >= 2.00) honours = "General Award";
 
   return {
     ok:true,
@@ -866,9 +867,19 @@ a) The Project paper, if the Project paper is a compulsory subject for the degre
 b) At least three other core/major courses<br>
 - The best three from the remaining Level 3 subjects and all Level 2 subjects, which must include at least 2 compulsory/major courses.<br><br>
 
-Source: <a href="https://isfm.ufm.edu.vn/handbook-chuong-trinh-cu-nhan-kinh-doanh-lien-ket-dai-hoc-help-malaysia--78.html" target="_blank" style="color:#666;text-decoration:underline;">
+
+<b>(**) Classification of Honours</b><br><br>
+
+3.75 – 4.00: First Class<br>
+3.25 – 3.74: Second Upper Class<br>
+2.75 – 3.24: Second Lower Class<br>
+2.50 – 2.74: Third Class<br>
+2.00 – 2.49: General Award<br>
+<br>
+
+<i>Source: <a href="https://isfm.ufm.edu.vn/handbook-chuong-trinh-cu-nhan-kinh-doanh-lien-ket-dai-hoc-help-malaysia--78.html" target="_blank" style="color:#666;text-decoration:underline;">
 STUDENT HANDBOOK 2025
-</a> – HELP University.
+</a> – HELP University.</i>
 </div>
 </footer>
 
